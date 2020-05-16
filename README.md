@@ -20,15 +20,19 @@
 
 • Deployment - Amazon Web Services
 
-## Start the app locally
+## Check out the product (if available)
+
+http://react-task-management-1.s3-website.eu-central-1.amazonaws.com/
+
+## Or start the app locally (backend only)
 
 ```bash
 #before start
-$ npm install
+$ yarn
 
 # start postgreSQL
  * plese use official documentation to start, run and create local db
 
 # start project
-$ npm run start
+$ yarn start
 ```

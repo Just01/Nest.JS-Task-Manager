@@ -1,12 +1,15 @@
-import { Repository, EntityRepository } from "typeorm";
-import { Task } from "./task.entity";
-import { CreateTaskDto } from "./dto/create-task.dto";
-import { TaskStatus } from "./task-status.enum";
-import { GetTasksFilterDto } from "./dto/get-tasks-filter.dto";
-import { User } from "src/auth/user.entity";
+import { EntityRepository, Repository } from 'typeorm'
+import { Task } from './task.entity'
+import { CreateTaskDto } from './dto/create-task.dto'
+import { TaskStatus } from './task-status.enum'
+import { GetTasksFilterDto } from './dto/get-tasks-filter.dto'
+import { User } from 'src/auth/user.entity'
+import { InternalServerErrorException, Logger } from '@nestjs/common'
 
 @EntityRepository(Task)
 export class TaskRepository extends Repository<Task> {
+    private logger = new Logger('Tasks Repository Logger')
+
     async getTasks(
       filterDto: GetTasksFilterDto,
       user: User,
@@ -24,7 +27,13 @@ export class TaskRepository extends Repository<Task> {
             query.andWhere('task.title LIKE :search OR task.description LIKE :search', {search: `%${search}%`})
         }
 
-        return await query.getMany()
+        try {
+            return await query.getMany()
+        } catch (e) {
+            this.logger.error(`Failed to get task for ${user.username}. DTO ${JSON.stringify(filterDto)}`, e.stack)
+            throw new InternalServerErrorException();
+        }
+
     }
     async createTask(createTaskDto: CreateTaskDto, user: User): Promise<Task> {
         const { title, description } = createTaskDto
@@ -34,7 +43,14 @@ export class TaskRepository extends Repository<Task> {
         task.description = description
         task.status = TaskStatus.OPEN
         task.user = user
-        await task.save()
+
+
+        try {
+            await task.save()
+        } catch (e) {
+            this.logger.error(`Failed to create task for ${user.username}. DTO ${createTaskDto}`, e.stack)
+            throw new InternalServerErrorException();
+        }
 
         delete task.user
 
